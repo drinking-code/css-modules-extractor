@@ -1,0 +1,16 @@
+{
+  "name": "css-modules-extractor",
+  "version": "0.1.0-experimental",
+  "description": "",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^18.15.10"
+  }
+}
