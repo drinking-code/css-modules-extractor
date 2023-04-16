@@ -1,119 +1,72 @@
 import * as fs from 'fs'
-import * as path from 'path'
-import resolveFile from './resolve-file.js'
+import {Input} from 'postcss'
+import scssTokenize from 'postcss-scss/lib/scss-tokenize'
 
-const importPattern = /@(use|import|forward) ?['"]([^'"]+)['"] *( as ([^ ]+))?? *;/g
-const variablesPattern = /^\$([^ :]+):([^;]+);/gm
-const singleLineCommentPattern = /\/\/.+$/gm
-const multiLineCommentPattern = /\/\*(.|\n)*?\*\//g
+const fileContents: Map<string, string> = new Map()
+const fileAsInput: Map<string, Input> = new Map()
+const tokenizedFiles: Map<string, ReturnType<typeof scssTokenize>> = new Map()
 
-// todo: includes
-
-const readFiles: Map<string, string> = new Map()
+function getOrSetKey<K, V extends (...args: any) => any>(map: Map<any, any>, key: K, makeValue: V): ReturnType<V> {
+    if (!map.has(key)) map.set(key, makeValue())
+    return map.get(key)
+}
 
 function readFile(fileName: string): string {
-    if (readFiles.has(fileName)) return readFiles.get(fileName)
-    const fileContents = fs.readFileSync(fileName, 'utf8')
-        .replace(multiLineCommentPattern, '')
-        .replace(singleLineCommentPattern, '')
-    readFiles.set(fileName, fileContents)
-    return fileContents
+    return getOrSetKey(fileContents, fileName, fs.readFileSync.bind(null, fileName, 'utf8'))
 }
 
-type ImportDataType = {
-    method: 'use' | 'import' | 'forward',
-    importPath: string,
-    as: string | undefined,
-}
-type GetNamesOptionsType = {
-    importTypes?: ImportTypesListType
+function fileToInput(fileName: string): Input {
+    return new Input(readFile(fileName))
 }
 
-type ImportTypesListType = { use: boolean, import: boolean, forward: boolean }
-
-function getImports(fileContents: string, types?: ImportTypesListType): ImportDataType[] {
-    types ??= {} as ImportTypesListType
-    types = {
-        use: true,
-        import: true,
-        forward: true,
-        ...types
-    }
-    const importsMatches = fileContents.matchAll(importPattern)
-    const importsData: ImportDataType[] = []
-    for (const match of importsMatches) {
-        const [fullStatement, method, importPath, asStatement, as] = match
-        if (!types[method]) continue
-        importsData.push({
-            method: method as ImportDataType['method'],
-            importPath,
-            as
-        })
-    }
-    return importsData
+function getFileAsInput(fileName: string): string {
+    return getOrSetKey(fileAsInput, fileName, fileToInput.bind(null, fileName))
 }
 
-export function getNames(fileName: string, options?: GetNamesOptionsType): string[] {
-    fileName = path.resolve(fileName)
-    const fileContents = readFile(fileName)
-    const importsData = getImports(fileContents, options?.importTypes)
-    const names = []
-    let variables = {}
-    for (const importData of importsData) {
-        const {method, importPath, as} = importData
-        if (importPath.startsWith('sass:')) continue
-        const resolvedPath = resolveFile(path.dirname(fileName), importPath)
-        let imported: ImportedDataType
-        if (method === 'use') {
-            imported = useImport(resolvedPath)
-        } else if (method === 'import') {
-            imported = importImport(resolvedPath)
-        } else if (method === 'forward') {
-            imported = forwardImport(resolvedPath)
-        }
-        const {names: importedNames, variables: importedVariables} = imported
-        names.push(...importedNames)
-        variables = {
-            ...variables,
-            ...importedVariables
+function tokenizeFile(fileName: string): ReturnType<typeof scssTokenize> {
+    return getOrSetKey(tokenizedFiles, fileName, scssTokenize.bind(null, getFileAsInput(fileName)))
+}
+
+const globalImport = Symbol.for('globalScope')
+
+interface ImportData {
+    file: string
+    nameSpace: string | typeof globalImport
+}
+
+type Partial<T> = {
+    [K in keyof T]?: T[K];
+}
+
+export function getNames(fileName: string/*, options?: GetNamesOptionsType*/)/*: string[]*/ {
+    const tokenizer = tokenizeFile(fileName)
+    const seenImports: ImportData[] = []
+    const scope = {}
+    while (!tokenizer.endOfFile()) {
+        const token = tokenizer.nextToken()
+        if (token[0] === 'at-word') {
+            if (token[1] === '@use' || token[1] === '@import') {
+                const importData: Partial<ImportData> = {nameSpace: globalImport}
+                while (!tokenizer.endOfFile()) {
+                    const token = tokenizer.nextToken()
+                    if (token[0] === 'string') {
+                        importData.file = token[1]
+                    } else if (token[0] === 'word') {
+                        if (token[1] === 'as') {
+                            importData.nameSpace = null
+                        } else if (importData.nameSpace === null) { // every word after "as"
+                            importData.nameSpace = token[1] === '*' ? globalImport : token[1]
+                        }
+                    } else if (token[0] === ';') {
+                        seenImports.push(importData as ImportData)
+                        break;
+                    }
+                }
+            }
+        } else if (token[0] === 'word') {
+            if (token[1].startsWith('#{')) {
+                console.log(token[1])
+            }
         }
     }
-    const lines = fileContents.matchAll(/[^#]{/g)
-    console.log(Array.from(lines))
-    // for (const lineIndex in lines) {
-    //     const line = lines[lineIndex]
-    //     if (line) {
-    //     }
-    // }
-    return names
-}
-
-type VariableType = string
-type ImportedDataType = { names: string[], variables: { [name: string]: VariableType } }
-
-const globalImports = {import: true, forward: true, use: false}
-
-function useImport(fileName: string): ImportedDataType {
-    return abstractImport(fileName, {
-        importTypes: globalImports
-    })
-}
-
-function forwardImport(fileName: string): ImportedDataType {
-    return abstractImport(fileName)
-}
-
-function importImport(fileName: string): ImportedDataType {
-    return abstractImport(fileName)
-}
-
-function abstractImport(fileName: string, getNamesOptions?: GetNamesOptionsType): ImportedDataType {
-    const names = getNames(fileName, getNamesOptions)
-    const fileContents = readFile(fileName)
-    const variables = Object.fromEntries(
-        Array.from(fileContents.matchAll(variablesPattern)).map(match => {
-            return [match[1], match[2]]
-        })
-    )
-    return {names, variables}
 }
