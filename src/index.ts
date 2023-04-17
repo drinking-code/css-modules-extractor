@@ -1,35 +1,9 @@
-import * as fs from 'fs'
-import {Input} from 'postcss'
-import scssTokenize from 'postcss-scss/lib/scss-tokenize'
+import {collectImport, globalImport} from './collect-import.js'
+import {spaceSymbol, trimSentence} from './trim-sentence.js'
+import {collectInclude} from './collect-include'
+import {tokenizeFile} from './files'
 
-const fileContents: Map<string, string> = new Map()
-const fileAsInput: Map<string, Input> = new Map()
-const tokenizedFiles: Map<string, ReturnType<typeof scssTokenize>> = new Map()
-
-function getOrSetKey<K, V extends (...args: any) => any>(map: Map<any, any>, key: K, makeValue: V): ReturnType<V> {
-    if (!map.has(key)) map.set(key, makeValue())
-    return map.get(key)
-}
-
-function readFile(fileName: string): string {
-    return getOrSetKey(fileContents, fileName, fs.readFileSync.bind(null, fileName, 'utf8'))
-}
-
-function fileToInput(fileName: string): Input {
-    return new Input(readFile(fileName))
-}
-
-function getFileAsInput(fileName: string): string {
-    return getOrSetKey(fileAsInput, fileName, fileToInput.bind(null, fileName))
-}
-
-function tokenizeFile(fileName: string): ReturnType<typeof scssTokenize> {
-    return getOrSetKey(tokenizedFiles, fileName, scssTokenize.bind(null, getFileAsInput(fileName)))
-}
-
-const globalImport = Symbol.for('globalScope')
-
-interface ImportData {
+export interface ImportData {
     file: string
     nameSpace: string | typeof globalImport
 }
@@ -38,35 +12,61 @@ type Partial<T> = {
     [K in keyof T]?: T[K];
 }
 
-export function getNames(fileName: string/*, options?: GetNamesOptionsType*/)/*: string[]*/ {
+export type Sentence = Array<typeof spaceSymbol | string>
+
+interface Selector {
+    content: Sentence,
+    parent?: Selector,
+    children?: Selector[]
+}
+
+// no ast
+export function getNames(fileName: string) {
     const tokenizer = tokenizeFile(fileName)
     const seenImports: ImportData[] = []
-    const scope = {}
+    // const scope = {}
+    const selectors: Selector[] = []
+    let parentSelector
+    let sentence: Sentence = []
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
+        // console.log(token)
         if (token[0] === 'at-word') {
             if (token[1] === '@use' || token[1] === '@import') {
-                const importData: Partial<ImportData> = {nameSpace: globalImport}
-                while (!tokenizer.endOfFile()) {
-                    const token = tokenizer.nextToken()
-                    if (token[0] === 'string') {
-                        importData.file = token[1]
-                    } else if (token[0] === 'word') {
-                        if (token[1] === 'as') {
-                            importData.nameSpace = null
-                        } else if (importData.nameSpace === null) { // every word after "as"
-                            importData.nameSpace = token[1] === '*' ? globalImport : token[1]
-                        }
-                    } else if (token[0] === ';') {
-                        seenImports.push(importData as ImportData)
-                        break;
-                    }
-                }
+                collectImport(tokenizer, {nameSpace: globalImport}, seenImports)
+            } else if (token[1] === '@include') {
+                collectInclude(tokenizer)
+            } else if (token[1] === '@at-root') {
+                // todo @at-root (maybe not needed)
             }
         } else if (token[0] === 'word') {
-            if (token[1].startsWith('#{')) {
-                console.log(token[1])
+            sentence.push(token[1])
+            /*if (token[1].startsWith('#{')) { todo: put this in selector builder
+                console.log(token[1].slice(2, -1))
+            }*/
+        } else if (token[0] === 'space') {
+            sentence.push(spaceSymbol)
+        } else if (token[0] === '}' || token[0] === ';') {
+            sentence = []
+            if (token[0] === '}') {
+                // move up in tree
+                parentSelector = parentSelector?.parent
             }
+        } else if (token[0] === '{') {
+            // move down in tree
+            const child = {
+                content: trimSentence(sentence),
+                parent: parentSelector
+            }
+            if (!parentSelector) {
+                selectors.push(child)
+            } else {
+                parentSelector.children ??= []
+                parentSelector.children.push(child)
+            }
+            parentSelector = child
+            sentence = []
         }
     }
+    console.log(selectors[0].children, seenImports)
 }
