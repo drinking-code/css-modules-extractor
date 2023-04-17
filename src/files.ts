@@ -11,18 +11,39 @@ function getOrSetKey<K, V extends (...args: any) => any>(map: Map<any, any>, key
     return map.get(key)
 }
 
-function readFile(fileName: string): string {
-    return getOrSetKey(fileContents, fileName, fs.readFileSync.bind(null, fileName, 'utf8'))
+export function readFile(fileName: string): string {
+    if (!fileContents.has(fileName)) fileContents.set(fileName, fs.readFileSync(fileName, 'utf8'))
+    return fileContents.get(fileName)
 }
 
-function fileToInput(fileName: string): Input {
-    return new Input(readFile(fileName))
+function fileToInput(fileContents: string): Input {
+    return new Input(fileContents)
 }
 
-function getFileAsInput(fileName: string): string {
-    return getOrSetKey(fileAsInput, fileName, fileToInput.bind(null, fileName))
+function getScssAsInput(fileContents: string): Input {
+    if (!fileAsInput.has(fileContents)) fileAsInput.set(fileContents, fileToInput(fileContents))
+    return fileAsInput.get(fileContents)
 }
 
-export function tokenizeFile(fileName: string): ReturnType<typeof scssTokenize> {
-    return getOrSetKey(tokenizedFiles, fileName, scssTokenize.bind(null, getFileAsInput(fileName)))
+interface Tokenizer {
+    back: (token: TokenType) => void,
+    nextToken: (opts?: NextTokenOptions) => TokenType,
+    endOfFile: () => boolean,
+    position: () => number,
+}
+
+interface NextTokenOptions {
+    ignoreUnclosed: boolean
+}
+
+type TokenDescriptorType =
+    'space' | '[' | ']' | '{' | '}' | ':' | ';' | ')' | 'word' | 'brackets' | '(' | 'string' | 'at-word' | 'comment'
+type TokenType = [TokenDescriptorType, string, number?, number?, 'inline'?]
+
+export function tokenizeFile(fileName: string): Tokenizer {
+    return scssTokenize(getScssAsInput(readFile(fileName)))
+}
+
+export function tokenizeExpression(expression: string): Tokenizer {
+    return scssTokenize(getScssAsInput(expression))
 }

@@ -6,7 +6,7 @@ export function collectImport(tokenizer, importData: Partial<ImportData>, seenIm
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
         if (token[0] === 'string') {
-            importData.file = token[1]
+            importData.file = token[1].slice(1, -1)
         } else if (token[0] === 'word') {
             if (token[1] === 'as') {
                 importData.nameSpace = null

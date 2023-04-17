@@ -19,7 +19,7 @@ export interface Selector {
     children?: Selector[]
 }
 
-export function getSelectors(tokenizer, seenImports: ImportData[], selectors: Selector[]) {
+export function getSelectors(tokenizer, selectors: Selector[], seenImports: ImportData[]) {
     let parentSelector
     let sentence: Sentence = []
     while (!tokenizer.endOfFile()) {
@@ -35,9 +35,6 @@ export function getSelectors(tokenizer, seenImports: ImportData[], selectors: Se
             }
         } else if (token[0] === 'word') {
             sentence.push(token[1])
-            /*if (token[1].startsWith('#{')) { todo: put this in selector builder
-                console.log(token[1].slice(2, -1))
-            }*/
         } else if (token[0] === 'space') {
             sentence.push(spaceSymbol)
         } else if (token[0] === '}' || token[0] === ';') {
