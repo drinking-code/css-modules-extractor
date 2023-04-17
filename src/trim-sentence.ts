@@ -1,4 +1,4 @@
-import {type Sentence} from './index'
+import {type Sentence} from './get-selectors.js'
 
 export const spaceSymbol = Symbol.for('space')
 

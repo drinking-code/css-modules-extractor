@@ -1,4 +1,4 @@
-import {type ImportData} from './index'
+import {type ImportData} from './get-selectors.js'
 
 export const globalImport = Symbol.for('globalScope')
 
