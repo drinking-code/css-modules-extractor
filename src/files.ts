@@ -25,7 +25,7 @@ function getScssAsInput(fileContents: string): Input {
     return fileAsInput.get(fileContents)
 }
 
-interface Tokenizer {
+export interface Tokenizer {
     back: (token: TokenType) => void,
     nextToken: (opts?: NextTokenOptions) => TokenType,
     endOfFile: () => boolean,
@@ -38,7 +38,7 @@ interface NextTokenOptions {
 
 type TokenDescriptorType =
     'space' | '[' | ']' | '{' | '}' | ':' | ';' | ')' | 'word' | 'brackets' | '(' | 'string' | 'at-word' | 'comment'
-type TokenType = [TokenDescriptorType, string, number?, number?, 'inline'?]
+export type TokenType = [TokenDescriptorType, string, number?, number?, 'inline'?]
 
 export function tokenizeFile(fileName: string): Tokenizer {
     return scssTokenize(getScssAsInput(readFile(fileName)))
@@ -46,4 +46,12 @@ export function tokenizeFile(fileName: string): Tokenizer {
 
 export function tokenizeExpression(expression: string): Tokenizer {
     return scssTokenize(getScssAsInput(expression))
+}
+
+export function fakeTokenizer(tokens: TokenType[]): Tokenizer {
+    let index = 0
+    return {
+        nextToken: () => tokens[index++],
+        endOfFile: () => index >= tokens.length,
+    } as Tokenizer
 }

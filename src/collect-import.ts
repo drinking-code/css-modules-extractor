@@ -2,7 +2,7 @@ import {type ImportData} from './get-selectors.js'
 
 export const globalImport = Symbol.for('globalScope')
 
-export function collectImport(tokenizer, importData: Partial<ImportData>, seenImports: ImportData[]) {
+export function collectImport(tokenizer, importData: Partial<ImportData>) {
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
         if (token[0] === 'string') {
@@ -14,7 +14,6 @@ export function collectImport(tokenizer, importData: Partial<ImportData>, seenIm
                 importData.nameSpace = token[1] === '*' ? globalImport : token[1]
             }
         } else if (token[0] === ';') {
-            seenImports.push(importData as ImportData)
             break;
         }
     }

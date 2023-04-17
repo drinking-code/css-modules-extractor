@@ -5,10 +5,7 @@ import {collectInclude} from './collect-include.js'
 export interface ImportData {
     file: string
     nameSpace: string | typeof globalImport
-}
-
-type Partial<T> = {
-    [K in keyof T]?: T[K];
+    type: 'use' | 'import' | 'forward'
 }
 
 export type Sentence = Array<typeof spaceSymbol | string>
@@ -27,7 +24,12 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
         // console.log(token)
         if (token[0] === 'at-word') {
             if (token[1] === '@use' || token[1] === '@import') {
-                collectImport(tokenizer, {nameSpace: globalImport}, seenImports)
+                const importData: Partial<ImportData> = {
+                    nameSpace: globalImport,
+                    type: token[1].substring(1)
+                }
+                collectImport(tokenizer, importData)
+                seenImports.push(importData as ImportData)
             } else if (token[1] === '@include') {
                 collectInclude(tokenizer)
             } else if (token[1] === '@at-root') {

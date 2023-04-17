@@ -1,4 +1,5 @@
 dist
+!dist/index.d.ts
 .unimportedrc.json
 
 # files for testing out
