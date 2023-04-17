@@ -1,4 +1,6 @@
+dist
+.unimportedrc.json
+
+# files for testing out
 styles
 global
-
-dist
