@@ -8,11 +8,17 @@ export function evaluateExpression(expression: string, seenImports: ImportData[]
     return evaluateTokenizedExpression(tokenizeExpression(expression), seenImports, fileName)
 }
 
+const operators = [['+', '-']]
+
 export function evaluateTokenizedExpression(tokenizer: Tokenizer, seenImports: ImportData[], fileName: string): string {
-    let evaluatedExpression = ''
+    const expressionList = []
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
         if (token[0] === 'word') {
+            if (token[1] in operators) {
+                expressionList.push(operators[token[1]])
+                continue
+            }
             const isUnscopedVariable = token[1].startsWith('$')
             const isScopedVariable = token[1].includes('.$')
             // console.log(token[1], isScopedVariable, isUnscopedVariable)
@@ -23,12 +29,15 @@ export function evaluateTokenizedExpression(tokenizer: Tokenizer, seenImports: I
                 const variableName = isUnscopedVariable
                     ? token[1]
                     : token[1].substring(token[1].indexOf('.$') - 1)
-                evaluatedExpression += resolveVariable(variableName, namespace, seenImports, fileName).toString()
+                expressionList.push(resolveVariable(variableName, namespace, seenImports, fileName).toString())
             }
         } else if (token[0] === 'string') {
-            evaluatedExpression += token[1].slice(1, -1)
+            expressionList.push(token[1].slice(1, -1))
         }
     }
-    console.log(evaluatedExpression)
+    let evaluatedExpression = expressionList.join('')
+    // todo: evaluate operators
+
+
     return evaluatedExpression
 }

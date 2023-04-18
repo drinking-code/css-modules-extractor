@@ -11,5 +11,7 @@ export function getNames(fileName: string) {
     const seenImports: ImportData[] = []
     const selectors: Selector[] = []
     getSelectors(tokenizer, selectors, seenImports)
-    extractNames(selectors, seenImports, fileName)
+    const names: Set<string> = new Set()
+    extractNames(selectors, seenImports, fileName, names)
+    console.log(names)
 }

@@ -6,11 +6,19 @@ import {evaluateExpression} from './evaluate-expression.js'
 
 const lastSelectorPart = (fullSelector: string): string => fullSelector.substring(fullSelector.lastIndexOf(' ') + 1)
 
-export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string) {
+export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string, names: Set<string>, parentSelector: string = '') {
     for (const selector of selectors) {
-        // console.log(selector)
         // evaluate expressions only if after space, at position 0, or inside class / id
         let currentSelectorString = ''
+        let startsWithAmp = selector.content[0][0] === '&'
+        for (let i = 0; i < selector.content.length; i++) {
+            if (selector.content[i] === spaceSymbol) continue
+            while ((selector.content[i] as string).includes('&')) {
+                const ampIndex = (selector.content[i] as string).indexOf('&')
+                selector.content[i] =
+                    (selector.content[i] as string).substring(0, ampIndex) + parentSelector + (selector.content[i] as string).substring(ampIndex + 1)
+            }
+        }
         selector.content.forEach((word, index) => {
             if (word === spaceSymbol) {
                 currentSelectorString += ' '
@@ -24,6 +32,22 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                 currentSelectorString += word
             }
         })
-        // console.log(currentSelectorString)
+        // if (!startsWithAmp && parentSelector)
+        //     currentSelectorString = parentSelector + ' ' + currentSelectorString
+
+        let name = ''
+        for (let i = currentSelectorString.length - 1; i >= 0; i--) {
+            const char = currentSelectorString[i]
+            name = char + name
+            if (char === '#' || char === '.') {
+                names.add(name)
+                name = ''
+            } else if (char === ' ') {
+                name = ''
+            }
+        }
+
+        if (selector.children && selector.children.length > 0)
+            extractNames(selector.children, seenImports, fileName, names, currentSelectorString)
     }
 }
