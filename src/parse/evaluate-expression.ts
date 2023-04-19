@@ -21,7 +21,6 @@ export function evaluateTokenizedExpression(tokenizer: Tokenizer, seenImports: I
             }
             const isUnscopedVariable = token[1].startsWith('$')
             const isScopedVariable = token[1].includes('.$')
-            // console.log(token[1], isScopedVariable, isUnscopedVariable)
             if (isUnscopedVariable || isScopedVariable) {
                 const namespace = isUnscopedVariable
                     ? globalImport

@@ -4,7 +4,6 @@ import scssTokenize from 'postcss-scss/lib/scss-tokenize'
 
 const fileContents: Map<string, string> = new Map()
 const fileAsInput: Map<string, Input> = new Map()
-const tokenizedFiles: Map<string, ReturnType<typeof scssTokenize>> = new Map()
 
 export function readFile(fileName: string): string {
     if (!fileContents.has(fileName)) fileContents.set(fileName, fs.readFileSync(fileName, 'utf8'))

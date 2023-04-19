@@ -7,7 +7,7 @@ export type GenerateScopedNameFunction = (name: string, filename: string, css: s
 export function scopeNames(names: {[local: string]: string}, options: {
     generateScopedName?: string | GenerateScopedNameFunction,
     hashPrefix?: string
-}, fileName) {
+}, fileName: string) {
     const css = readFile(fileName)
     if (typeof options.generateScopedName === 'function') {
         for (const namesKey in names) {
@@ -33,10 +33,9 @@ export function scopeNames(names: {[local: string]: string}, options: {
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function stringHash(str) {
-    let hash = 5381;
-    let i = str.length;
+    let hash = 5381, i = str.length
     while (i) {
-        hash = (hash * 33) ^ str.charCodeAt(--i);
+        hash = (hash * 33) ^ str.charCodeAt(--i)
     }
-    return hash >>> 0;
+    return hash >>> 0
 }

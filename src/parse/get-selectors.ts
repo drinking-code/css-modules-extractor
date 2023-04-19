@@ -21,7 +21,6 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
     let sentence: Sentence = []
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
-        // console.log(token)
         if (token[0] === 'at-word') {
             if (token[1] === '@use' || token[1] === '@import') {
                 const importData: Partial<ImportData> = {

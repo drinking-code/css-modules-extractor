@@ -35,6 +35,6 @@ export function getNames(fileName: string, options: Options = {}) { // no ast
     extractNames(selectors, seenImports, fileName, names)
 
     scopeNames(names, options, fileName)
-    conventionaliseLocals(names, options)
+    conventionaliseLocals(names, options, fileName)
     return names
 }

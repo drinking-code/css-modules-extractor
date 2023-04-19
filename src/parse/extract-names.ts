@@ -18,12 +18,12 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                 selector.content[i] =
                     (selector.content[i] as string).substring(0, ampIndex) + parentSelector + (selector.content[i] as string).substring(ampIndex + 1)
             }
-        }
-        selector.content.forEach((word, index) => { // todo
+
+            const word = selector.content[i]
             if (word === spaceSymbol) {
                 currentSelectorString += ' '
             } else if (word.startsWith('#{') &&
-                (index === 0 || selector.content[index - 1] === spaceSymbol ||
+                (i === 0 || selector.content[i - 1] === spaceSymbol ||
                     lastSelectorPart(currentSelectorString).startsWith('.') ||
                     lastSelectorPart(currentSelectorString).startsWith('#'))
             ) {
@@ -31,7 +31,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
             } else {
                 currentSelectorString += word
             }
-        })
+        }
         // if (!startsWithAmp && parentSelector)
         //     currentSelectorString = parentSelector + ' ' + currentSelectorString
 

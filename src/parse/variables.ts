@@ -32,7 +32,6 @@ export function scanFileForVariables(filePath: string, followUse: boolean = fals
     const variables: VariablesType = {}
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
-        // console.log(token)
         if (token[0] === 'at-word') {
             if (token[1] === '@import' || (token[1] === '@use' && followUse) || token[1] === '@forward') { // todo: i dont know if this is right
                 const importData: Partial<ImportData> = {
@@ -48,7 +47,6 @@ export function scanFileForVariables(filePath: string, followUse: boolean = fals
                 let variableValue
                 while (!tokenizer.endOfFile()) {
                     const token = tokenizer.nextToken()
-                    // console.log(token)
                     if (token[0] === ':') {
                         variableValue = []
                     } else if (token[0] === ';') {
