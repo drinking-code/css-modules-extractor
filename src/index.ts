@@ -6,24 +6,24 @@ import {extractNames} from './parse/extract-names.js'
 import {type GenerateScopedNameFunction, scopeNames} from './post/scoped-name.js'
 import {conventionaliseLocals, type LocalsConventionFunction} from './post/locals-convention.js'
 
-interface Options {
+export interface Options {
     localsConvention?: "camelCase" | "camelCaseOnly" | "dashes" | "dashesOnly" | LocalsConventionFunction;
 
     // scopeBehaviour?: "global" | "local";
-    globalModulePaths?: RegExp[];
+    // globalModulePaths?: RegExp[];
 
     generateScopedName?: string | GenerateScopedNameFunction;
 
     hashPrefix?: string;
-    exportGlobals?: boolean;
-    root?: string;
+    // exportGlobals?: boolean;
+    // root?: string;
 
     // Loader?: typeof Loader;
 
-    resolve?: (file: string, importer: string) => string | null | Promise<string | null>;
+    // resolve?: (file: string, importer: string) => string | null | Promise<string | null>;
 }
 
-export function getNames(fileName: string, options: Options = {}) { // no ast
+export default function getNames(fileName: string, options: Options = {}) { // no ast
     fileName = path.resolve(fileName)
 
     const tokenizer = tokenizeFile(fileName)
