@@ -1,6 +1,7 @@
 dist
 !dist/index.d.ts
 .unimportedrc.json
+*.tgz
 
 # files for testing out
 styles

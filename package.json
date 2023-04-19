@@ -2,8 +2,8 @@
   "name": "css-modules-extractor",
   "version": "0.1.0-experimental",
   "description": "",
-  "main": "src/index.ts",
-  "types": "src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
