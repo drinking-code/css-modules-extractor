@@ -3,7 +3,8 @@
     "module": "esnext",
     "target": "esnext",
     "moduleResolution": "node",
-    "outDir": "dist"
+    "outDir": "dist",
+    "allowSyntheticDefaultImports": true
   },
   "exclude": [
     "node_modules"

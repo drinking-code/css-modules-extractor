@@ -2,9 +2,9 @@ import * as path from 'path'
 
 import {collectImport, type globalImport} from './collect-import.js'
 import {type ImportData} from './get-selectors.js'
-import {resolveImportFileSpecifier} from './resolve-file.js'
+import {resolveImportFileSpecifier} from '../utils/resolve-file.js'
 import {evaluateTokenizedExpression} from './evaluate-expression.js'
-import {fakeTokenizer, tokenizeFile, type TokenType} from './files.js'
+import {fakeTokenizer, tokenizeFile, type TokenType} from '../utils/files.js'
 import {trimTokens} from './trim-sentence.js'
 
 export function resolveVariable(variableName: string, namespace: string | typeof globalImport, seenImports: ImportData[], fileName: string): any {

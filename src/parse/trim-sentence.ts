@@ -1,5 +1,5 @@
 import {type Sentence} from './get-selectors.js'
-import {type TokenType} from './files.js'
+import {type TokenType} from '../utils/files.js'
 
 export const spaceSymbol = Symbol.for('space')
 

@@ -6,11 +6,11 @@ import {evaluateExpression} from './evaluate-expression.js'
 
 const lastSelectorPart = (fullSelector: string): string => fullSelector.substring(fullSelector.lastIndexOf(' ') + 1)
 
-export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string, names: Set<string>, parentSelector: string = '') {
+export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string, names: {[local: string]: string}, parentSelector: string = '') {
     for (const selector of selectors) {
         // evaluate expressions only if after space, at position 0, or inside class / id
         let currentSelectorString = ''
-        let startsWithAmp = selector.content[0][0] === '&'
+        // let startsWithAmp = selector.content[0][0] === '&'
         for (let i = 0; i < selector.content.length; i++) {
             if (selector.content[i] === spaceSymbol) continue
             while ((selector.content[i] as string).includes('&')) {
@@ -19,7 +19,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                     (selector.content[i] as string).substring(0, ampIndex) + parentSelector + (selector.content[i] as string).substring(ampIndex + 1)
             }
         }
-        selector.content.forEach((word, index) => {
+        selector.content.forEach((word, index) => { // todo
             if (word === spaceSymbol) {
                 currentSelectorString += ' '
             } else if (word.startsWith('#{') &&
@@ -40,9 +40,10 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
             const char = currentSelectorString[i]
             name = char + name
             if (char === '#' || char === '.') {
-                names.add(name)
+                if (!(name in names))
+                    names[name.substring(1)] = name
                 name = ''
-            } else if (char === ' ') {
+            } else if (char === ' ' || char === ',') {
                 name = ''
             }
         }

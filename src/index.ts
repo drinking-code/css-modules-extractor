@@ -1,17 +1,40 @@
 import * as path from 'path'
 
-import {tokenizeFile} from './files.js'
-import {getSelectors, type ImportData, type Selector} from './get-selectors.js'
-import {extractNames} from './extract-names.js'
+import {tokenizeFile} from './utils/files.js'
+import {getSelectors, type ImportData, type Selector} from './parse/get-selectors.js'
+import {extractNames} from './parse/extract-names.js'
+import {type GenerateScopedNameFunction, scopeNames} from './post/scoped-name.js'
+import {conventionaliseLocals, type LocalsConventionFunction} from './post/locals-convention.js'
 
-// no ast
-export function getNames(fileName: string) {
+interface Options {
+    localsConvention?: "camelCase" | "camelCaseOnly" | "dashes" | "dashesOnly" | LocalsConventionFunction;
+
+    // scopeBehaviour?: "global" | "local";
+    globalModulePaths?: RegExp[];
+
+    generateScopedName?: string | GenerateScopedNameFunction;
+
+    hashPrefix?: string;
+    exportGlobals?: boolean;
+    root?: string;
+
+    // Loader?: typeof Loader;
+
+    resolve?: (file: string, importer: string) => string | null | Promise<string | null>;
+}
+
+export function getNames(fileName: string, options: Options = {}) { // no ast
     fileName = path.resolve(fileName)
+
     const tokenizer = tokenizeFile(fileName)
     const seenImports: ImportData[] = []
     const selectors: Selector[] = []
     getSelectors(tokenizer, selectors, seenImports)
-    const names: Set<string> = new Set()
+
+    const names: { [local: string]: string } = {}
     extractNames(selectors, seenImports, fileName, names)
-    console.log(names)
+
+    scopeNames(names, options, fileName)
+    conventionaliseLocals(names, options)
+    return names
 }

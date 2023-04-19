@@ -1,4 +1,4 @@
-import {tokenizeExpression, type Tokenizer} from './files.js'
+import {tokenizeExpression, type Tokenizer} from '../utils/files.js'
 import {type ImportData} from './get-selectors.js'
 import {globalImport} from './collect-import.js'
 import {resolveVariable} from './variables.js'

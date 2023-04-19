@@ -6,11 +6,6 @@ const fileContents: Map<string, string> = new Map()
 const fileAsInput: Map<string, Input> = new Map()
 const tokenizedFiles: Map<string, ReturnType<typeof scssTokenize>> = new Map()
 
-function getOrSetKey<K, V extends (...args: any) => any>(map: Map<any, any>, key: K, makeValue: V): ReturnType<V> {
-    if (!map.has(key)) map.set(key, makeValue())
-    return map.get(key)
-}
-
 export function readFile(fileName: string): string {
     if (!fileContents.has(fileName)) fileContents.set(fileName, fs.readFileSync(fileName, 'utf8'))
     return fileContents.get(fileName)
