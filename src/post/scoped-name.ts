@@ -11,7 +11,7 @@ export function scopeNames(names: {[local: string]: string}, options: {
     const css = readFile(fileName)
     if (typeof options.generateScopedName === 'function') {
         for (const namesKey in names) {
-            names[namesKey] = names[namesKey].substring(0, 1) + options.generateScopedName(names[namesKey].substring(1), fileName, css)
+            names[namesKey] = options.generateScopedName(names[namesKey].substring(1), fileName, css)
         }
     } else if (typeof options.generateScopedName === 'string') {
         const nameGenerator = genericNames(options.generateScopedName, {
@@ -19,14 +19,14 @@ export function scopeNames(names: {[local: string]: string}, options: {
             hashPrefix: options.hashPrefix,
         })
         for (const namesKey in names) {
-            names[namesKey] = names[namesKey].substring(0, 1) + nameGenerator(names[namesKey].substring(1), fileName)
+            names[namesKey] = nameGenerator(names[namesKey].substring(1), fileName)
         }
     } else {
         const hash = stringHash(css).toString(36).substring(0, 5)
         for (const namesKey in names) {
             // from https://github.com/madyankin/postcss-modules/blob/325f0b33f1b746eae7aa827504a5efd0949022ef/src/scoping.js
             // but compatible
-            names[namesKey] = names[namesKey].substring(0, 1) + `_${names[namesKey].substring(1)}_${hash}`
+            names[namesKey] = `_${names[namesKey].substring(1)}_${hash}`
         }
     }
 }

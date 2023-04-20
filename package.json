@@ -1,6 +1,6 @@
 {
   "name": "css-modules-extractor",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
