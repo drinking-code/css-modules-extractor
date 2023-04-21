@@ -1,7 +1,13 @@
 {
   "name": "css-modules-extractor",
   "version": "0.1.1-experimental",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drinking-code/css-modules-extractor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/drinking-code/css-modules-extractor/issues"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -10,7 +16,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^18.15.10"
   },

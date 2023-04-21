@@ -43,7 +43,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                 if (!(name in names))
                     names[name.substring(1)] = name
                 name = ''
-            } else if (char === ' ' || char === ',') {
+            } else if (char === ' ' || char === ',' || char === ':') {
                 name = ''
             }
         }

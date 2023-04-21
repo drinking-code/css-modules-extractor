@@ -34,7 +34,7 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
             } else if (token[1] === '@at-root') {
                 // todo @at-root (maybe not needed)
             }
-        } else if (token[0] === 'word') {
+        } else if (token[0] === 'word' || token[0] === ':') {
             sentence.push(token[1])
         } else if (token[0] === 'space') {
             sentence.push(spaceSymbol)
