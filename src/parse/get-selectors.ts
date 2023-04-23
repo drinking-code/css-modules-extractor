@@ -16,8 +16,8 @@ export interface Selector {
     children?: Selector[]
 }
 
-export function getSelectors(tokenizer, selectors: Selector[], seenImports: ImportData[]) {
-    let parentSelector
+export function getSelectors(tokenizer, selectors: Selector[], seenImports: ImportData[], fileName: string) {
+    let parentSelector: Selector
     let sentence: Sentence = []
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
@@ -30,9 +30,12 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
                 collectImport(tokenizer, importData)
                 seenImports.push(importData as ImportData)
             } else if (token[1] === '@include') {
-                collectInclude(tokenizer)
+                // todo what if this is not inside a selector (in global scope)
+                collectInclude(tokenizer, parentSelector, seenImports, fileName)
             } else if (token[1] === '@at-root') {
                 // todo @at-root (maybe not needed)
+            } else if (token[1] === '@each') {
+                // todo impl class names inside @each
             }
         } else if (token[0] === 'word' || token[0] === ':') {
             sentence.push(token[1])

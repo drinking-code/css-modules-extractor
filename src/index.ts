@@ -29,7 +29,7 @@ export default function getNames(fileName: string, options: Options = {}) { // n
     const tokenizer = tokenizeFile(fileName)
     const seenImports: ImportData[] = []
     const selectors: Selector[] = []
-    getSelectors(tokenizer, selectors, seenImports)
+    getSelectors(tokenizer, selectors, seenImports, fileName)
 
     const names: { [local: string]: string } = {}
     extractNames(selectors, seenImports, fileName, names)

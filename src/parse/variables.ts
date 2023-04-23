@@ -1,6 +1,6 @@
 import * as path from 'path'
 
-import {collectImport, type globalImport} from './collect-import.js'
+import {collectImport, globalImport} from './collect-import.js'
 import {type ImportData} from './get-selectors.js'
 import {resolveImportFileSpecifier} from '../utils/resolve-file.js'
 import {evaluateTokenizedExpression} from './evaluate-expression.js'
@@ -32,16 +32,16 @@ export function scanFileForVariables(filePath: string, followUse: boolean = fals
     const variables: VariablesType = {}
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
-        if (token[0] === 'at-word') {
-            if (token[1] === '@import' || (token[1] === '@use' && followUse) || token[1] === '@forward') { // todo: i dont know if this is right
-                const importData: Partial<ImportData> = {
-                    type: token[1].substring(1) as ImportData['type']
-                }
-                collectImport(tokenizer, importData)
-                const basePath = path.dirname(filePath)
-                const fileVariables = scanFileForVariables(resolveImportFileSpecifier(basePath, importData.file))
-                Object.assign(variables, fileVariables)
+        if (token[1] === '@import' || (token[1] === '@use' && followUse) || token[1] === '@forward') { // todo: i dont know if this is right
+            const importData: Partial<ImportData> = {
+                type: token[1].substring(1) as ImportData['type']
             }
+            collectImport(tokenizer, importData)
+            if (importData.nameSpace !== globalImport)
+                continue
+            const basePath = path.dirname(filePath)
+            const fileVariables = scanFileForVariables(resolveImportFileSpecifier(basePath, importData.file))
+            Object.assign(variables, fileVariables)
         } else if (token[0] === 'word') {
             if (token[1].startsWith('$')) {
                 let variableValue
