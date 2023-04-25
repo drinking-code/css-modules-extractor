@@ -22,22 +22,31 @@ function getModulePackageJson(modulePath: string) {
     return modulePackageJsons.get(modulePath)
 }
 
+const resolvedImports: Map<string, string> = new Map()
+
 export function resolveImportFileSpecifier(base: string, fileSpecifier: string) {
+    const key = base + fileSpecifier
+    if (resolvedImports.has(key))
+        return resolvedImports.get(key)
+
+    let resolvedPath
     if (fileSpecifier.startsWith('#')) {
         if ('imports' in projectPackageJson)
-            return resolveProjectRoot(projectPackageJson.imports[fileSpecifier])
+            resolvedPath = resolveProjectRoot(projectPackageJson.imports[fileSpecifier])
     } else if (fileSpecifier.startsWith('.')) {
-        return resolveFile(base, fileSpecifier)
+        resolvedPath = resolveFile(base, fileSpecifier)
     } else {
         if ((fileSpecifier.startsWith('@') && fileSpecifier.split('/').length === 2) || !fileSpecifier.includes('/')) {
             const modulePath = resolveProjectRoot('node_modules', fileSpecifier)
             const modulePackageJson = getModulePackageJson(modulePath)
             const mainPath = modulePackageJson.main ?? modulePackageJson.module ?? 'index'
-            return resolveFile(modulePath, mainPath)
+            resolvedPath = resolveFile(modulePath, mainPath)
         } else {
-            return resolveFile(resolveProjectRoot('node_modules'), fileSpecifier)
+            resolvedPath = resolveFile(resolveProjectRoot('node_modules'), fileSpecifier)
         }
     }
+    resolvedImports.set(key, resolvedPath)
+    return resolvedPath
 }
 
 const possibleNames = ['index']
