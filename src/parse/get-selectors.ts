@@ -40,13 +40,13 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
                 collectInclude(tokenizer, parentSelector, seenImports, fileName, localVars)
             } else if (token[1] === '@at-root') {
                 // todo @at-root (maybe not needed)
-            } else if (token[1] === '@for') {
+            }/* else if (token[1] === '@for') {
                 // todo impl class names inside @for
                 collectFor(tokenizer)
             } else if (token[1] === '@each') {
                 // todo impl class names inside @each
                 collectEach(tokenizer)
-            }
+            }*/
         } else if (token[0] === 'word' || token[0] === ':') {
             sentence.push(token[1])
         } else if (token[0] === 'space') {
@@ -76,6 +76,7 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
             parentSelector = child
             sentence = []
         }
-        collectPossibleVariable(tokenizer, token, localVars, scopeId)
+        if (collectPossibleVariable(tokenizer, token, localVars, scopeId))
+            sentence = []
     }
 }

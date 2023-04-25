@@ -17,4 +17,5 @@ export function collectImport(tokenizer, importData: Partial<ImportData>) {
             break;
         }
     }
+    importData.nameSpace ??= globalImport
 }

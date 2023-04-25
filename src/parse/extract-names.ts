@@ -4,6 +4,7 @@ import {type ImportData, type Selector} from './get-selectors.js'
 import {spaceSymbol} from './trim-sentence.js'
 import {evaluateExpression} from './evaluate-expression.js'
 import type LocalVars from './local-vars.js'
+import {type} from 'os'
 
 const lastSelectorPart = (fullSelector: string): string => fullSelector.substring(fullSelector.lastIndexOf(' ') + 1)
 
@@ -14,13 +15,22 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
         // let startsWithAmp = selector.content[0][0] === '&'
         for (let i = 0; i < selector.content.length; i++) {
             if (selector.content[i] === spaceSymbol) continue
+            console.log(selector.content[i], (selector.content[i] as string).includes('&'))
             while ((selector.content[i] as string).includes('&')) {
                 const ampIndex = (selector.content[i] as string).indexOf('&')
                 selector.content[i] =
                     (selector.content[i] as string).substring(0, ampIndex) + parentSelector + (selector.content[i] as string).substring(ampIndex + 1)
             }
+            console.log(selector.content[i])
 
             const word = selector.content[i]
+            if (typeof word === 'string') {
+                console.log(word, word.startsWith('#{'), i === 0, selector.content[i - 1] === spaceSymbol, lastSelectorPart(currentSelectorString).startsWith('.'), lastSelectorPart(currentSelectorString).startsWith('#'))
+                console.log(i)
+            } else {
+                console.log(word)
+            }
+            console.log('css-be', currentSelectorString)
             if (word === spaceSymbol) {
                 currentSelectorString += ' '
             } else if (word.startsWith('#{') &&
@@ -32,6 +42,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
             } else {
                 currentSelectorString += word
             }
+            console.log('css-af', currentSelectorString)
         }
         // if (!startsWithAmp && parentSelector)
         //     currentSelectorString = parentSelector + ' ' + currentSelectorString
@@ -49,7 +60,8 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
             }
         }
 
-        if (selector.children && selector.children.length > 0)
+        if (selector.children && selector.children.length > 0) {
             extractNames(selector.children, seenImports, fileName, names, localVars, currentSelectorString)
+        }
     }
 }
