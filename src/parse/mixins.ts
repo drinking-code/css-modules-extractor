@@ -5,8 +5,9 @@ import {collectImport, globalImport} from './collect-import.js'
 import {getSelectors, type ImportData, type Selector} from './get-selectors.js'
 import {resolveImportFileSpecifier} from '../utils/resolve-file.js'
 import {trimTokens} from './trim-sentence.js'
+import type LocalVars from './local-vars.js'
 
-export function resolveMixin(mixinName: string, namespace: string | typeof globalImport, parentSelector: Selector, seenImports: ImportData[], fileName: string): any {
+export function resolveMixin(mixinName: string, namespace: string | typeof globalImport, parentSelector: Selector, seenImports: ImportData[], fileName: string, localVars: LocalVars): any {
     for (const importData of seenImports) {
         if (importData.nameSpace !== namespace) continue
         const basePath = path.dirname(fileName)
@@ -15,17 +16,20 @@ export function resolveMixin(mixinName: string, namespace: string | typeof globa
         if (mixinName in mixins) {
             const variableValueTokens = trimTokens(mixins[mixinName])
             parentSelector.children ??= []
-            getSelectors(fakeTokenizer(variableValueTokens), parentSelector.children, seenImports, fileName)
+            getSelectors(fakeTokenizer(variableValueTokens), parentSelector.children, seenImports, fileName, localVars)
             break
         }
     }
 }
 
 type MixinsType = { [p: string]: TokenType[] }
+const fileMixinsMap: Map<string, MixinsType> = new Map()
 
 export function scanFileForMixins(filePath: string): MixinsType {
-    const tokenizer = tokenizeFile(filePath)
+    if (fileMixinsMap.has(filePath))
+        return fileMixinsMap.get(filePath)
 
+    const tokenizer = tokenizeFile(filePath)
     const mixins: MixinsType = {}
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
@@ -67,5 +71,6 @@ export function scanFileForMixins(filePath: string): MixinsType {
             }
         }
     }
+    fileMixinsMap.set(filePath, mixins)
     return mixins
 }

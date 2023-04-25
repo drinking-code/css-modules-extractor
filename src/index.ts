@@ -5,6 +5,7 @@ import {getSelectors, type ImportData, type Selector} from './parse/get-selector
 import {extractNames} from './parse/extract-names.js'
 import {type GenerateScopedNameFunction, scopeNames} from './post/scoped-name.js'
 import {conventionaliseLocals, type LocalsConventionFunction} from './post/locals-convention.js'
+import LocalVars from './parse/local-vars.js'
 
 export interface Options {
     localsConvention?: "camelCase" | "camelCaseOnly" | "dashes" | "dashesOnly" | LocalsConventionFunction;
@@ -29,10 +30,11 @@ export default function getNames(fileName: string, options: Options = {}) { // n
     const tokenizer = tokenizeFile(fileName)
     const seenImports: ImportData[] = []
     const selectors: Selector[] = []
-    getSelectors(tokenizer, selectors, seenImports, fileName)
+    const localVars = new LocalVars()
+    getSelectors(tokenizer, selectors, seenImports, fileName, localVars)
 
     const names: { [local: string]: string } = {}
-    extractNames(selectors, seenImports, fileName, names)
+    extractNames(selectors, seenImports, fileName, names, localVars)
 
     scopeNames(names, options, fileName)
     conventionaliseLocals(names, options, fileName)

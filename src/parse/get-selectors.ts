@@ -1,6 +1,10 @@
 import {collectImport, globalImport} from './collect-import.js'
 import {spaceSymbol, trimSentence} from './trim-sentence.js'
 import {collectInclude} from './collect-include.js'
+import {collectEach, collectFor} from './collect-loop.js'
+import type LocalVars from './local-vars.js'
+import {collectPossibleVariable} from './variables.js'
+import {getNewId} from './identifiers.js'
 
 export interface ImportData {
     file: string
@@ -12,13 +16,15 @@ export type Sentence = Array<typeof spaceSymbol | string>
 
 export interface Selector {
     content: Sentence,
+    scopeId: number,
     parent?: Selector,
     children?: Selector[]
 }
 
-export function getSelectors(tokenizer, selectors: Selector[], seenImports: ImportData[], fileName: string) {
+export function getSelectors(tokenizer, selectors: Selector[], seenImports: ImportData[], fileName: string, localVars: LocalVars, scopeId?: number) {
     let parentSelector: Selector
     let sentence: Sentence = []
+    scopeId ??= getNewId()
     while (!tokenizer.endOfFile()) {
         const token = tokenizer.nextToken()
         if (token[0] === 'at-word') {
@@ -31,11 +37,15 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
                 seenImports.push(importData as ImportData)
             } else if (token[1] === '@include') {
                 // todo what if this is not inside a selector (in global scope)
-                collectInclude(tokenizer, parentSelector, seenImports, fileName)
+                collectInclude(tokenizer, parentSelector, seenImports, fileName, localVars)
             } else if (token[1] === '@at-root') {
                 // todo @at-root (maybe not needed)
+            } else if (token[1] === '@for') {
+                // todo impl class names inside @for
+                collectFor(tokenizer)
             } else if (token[1] === '@each') {
                 // todo impl class names inside @each
+                collectEach(tokenizer)
             }
         } else if (token[0] === 'word' || token[0] === ':') {
             sentence.push(token[1])
@@ -45,12 +55,14 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
             sentence = []
             if (token[0] === '}') {
                 // move up in tree
+                scopeId = parentSelector?.scopeId
                 parentSelector = parentSelector?.parent
             }
         } else if (token[0] === '{') {
             // move down in tree
-            const child = {
+            const child: Selector = {
                 content: trimSentence(sentence),
+                scopeId,
                 parent: parentSelector
             }
             if (!parentSelector) {
@@ -58,9 +70,12 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
             } else {
                 parentSelector.children ??= []
                 parentSelector.children.push(child)
+
             }
+            scopeId = getNewId()
             parentSelector = child
             sentence = []
         }
+        collectPossibleVariable(tokenizer, token, localVars, scopeId)
     }
 }

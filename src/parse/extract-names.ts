@@ -3,10 +3,11 @@ import * as path from 'path'
 import {type ImportData, type Selector} from './get-selectors.js'
 import {spaceSymbol} from './trim-sentence.js'
 import {evaluateExpression} from './evaluate-expression.js'
+import type LocalVars from './local-vars.js'
 
 const lastSelectorPart = (fullSelector: string): string => fullSelector.substring(fullSelector.lastIndexOf(' ') + 1)
 
-export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string, names: {[local: string]: string}, parentSelector: string = '') {
+export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string, names: {[local: string]: string}, localVars: LocalVars, parentSelector: string = '') {
     for (const selector of selectors) {
         // evaluate expressions only if after space, at position 0, or inside class / id
         let currentSelectorString = ''
@@ -27,7 +28,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                     lastSelectorPart(currentSelectorString).startsWith('.') ||
                     lastSelectorPart(currentSelectorString).startsWith('#'))
             ) {
-                currentSelectorString += evaluateExpression(word.slice(2, -1), seenImports, fileName)
+                currentSelectorString += evaluateExpression(word.slice(2, -1), seenImports, fileName, localVars, selector.scopeId)
             } else {
                 currentSelectorString += word
             }
@@ -49,6 +50,6 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
         }
 
         if (selector.children && selector.children.length > 0)
-            extractNames(selector.children, seenImports, fileName, names, currentSelectorString)
+            extractNames(selector.children, seenImports, fileName, names, localVars, currentSelectorString)
     }
 }

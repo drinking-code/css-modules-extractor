@@ -1,8 +1,9 @@
 import {resolveMixin} from './mixins.js'
 import {globalImport} from './collect-import.js'
 import {type ImportData, type Selector} from './get-selectors.js'
+import type LocalVars from './local-vars.js'
 
-export function collectInclude(tokenizer, parentSelector: Selector, seenImports: ImportData[], fileName: string) {
+export function collectInclude(tokenizer, parentSelector: Selector, seenImports: ImportData[], fileName: string, localVars: LocalVars) {
     let bracketLevel = 0
     let mixinName = '', mixinArgs = ''
     while (!tokenizer.endOfFile()) {
@@ -28,5 +29,5 @@ export function collectInclude(tokenizer, parentSelector: Selector, seenImports:
     mixinName = isScoped
         ? mixinName.substring(mixinName.indexOf('.') + 1)
         : mixinName
-    resolveMixin(mixinName, namespace, parentSelector, seenImports, fileName)
+    resolveMixin(mixinName, namespace, parentSelector, seenImports, fileName, localVars)
 }
