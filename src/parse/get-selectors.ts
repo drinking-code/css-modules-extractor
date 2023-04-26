@@ -19,6 +19,8 @@ export interface Selector {
     scopeId: number,
     parent?: Selector,
     children?: Selector[]
+    loopOver?: string,
+    loopAs?: string | string[],
 }
 
 export function getSelectors(tokenizer, selectors: Selector[], seenImports: ImportData[], fileName: string, localVars: LocalVars, scopeId?: number) {
@@ -40,13 +42,13 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
                 collectInclude(tokenizer, parentSelector, seenImports, fileName, localVars)
             } else if (token[1] === '@at-root') {
                 // todo @at-root (maybe not needed)
-            }/* else if (token[1] === '@for') {
+            } else if (token[1] === '@for') {
                 // todo impl class names inside @for
-                collectFor(tokenizer)
+                collectFor(tokenizer, parentSelector)
             } else if (token[1] === '@each') {
                 // todo impl class names inside @each
-                collectEach(tokenizer)
-            }*/
+                collectEach(tokenizer, parentSelector, seenImports, fileName, localVars)
+            }
         } else if (token[0] === 'word' || token[0] === ':') {
             sentence.push(token[1])
         } else if (token[0] === 'space') {
@@ -70,7 +72,6 @@ export function getSelectors(tokenizer, selectors: Selector[], seenImports: Impo
             } else {
                 parentSelector.children ??= []
                 parentSelector.children.push(child)
-
             }
             scopeId = getNewId()
             parentSelector = child

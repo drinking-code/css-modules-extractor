@@ -1,5 +1,4 @@
 import * as fs from 'fs'
-import {Input} from 'postcss'
 import scssTokenize from 'postcss-scss/lib/scss-tokenize'
 
 const fileContents: Map<string, string> = new Map()
@@ -8,6 +7,16 @@ const fileAsInput: Map<string, Input> = new Map()
 export function readFile(fileName: string): string {
     if (!fileContents.has(fileName)) fileContents.set(fileName, fs.readFileSync(fileName, 'utf8'))
     return fileContents.get(fileName)
+}
+
+class Input {
+    public css: string
+
+    constructor(css) {
+        this.css = css.toString()
+    }
+
+    public error: () => 0
 }
 
 function fileToInput(fileContents: string): Input {
@@ -42,10 +51,31 @@ export function tokenizeExpression(expression: string): Tokenizer {
     return scssTokenize(getScssAsInput(expression))
 }
 
+export class FakeTokenizer implements Tokenizer {
+    index: number = 0
+    private readonly tokens: TokenType[]
+
+    constructor(tokens: TokenType[]) {
+        this.tokens = tokens
+    }
+
+    nextToken(): TokenType {
+        return this.tokens[this.index++]
+    }
+
+    endOfFile(): boolean {
+        return this.index >= this.tokens.length
+    }
+
+    back(token?: TokenType) {
+        this.index--
+    }
+
+    position(): number {
+        return 0
+    }
+}
+
 export function fakeTokenizer(tokens: TokenType[]): Tokenizer {
-    let index = 0
-    return {
-        nextToken: () => tokens[index++],
-        endOfFile: () => index >= tokens.length,
-    } as Tokenizer
+    return new FakeTokenizer(tokens)
 }

@@ -64,8 +64,11 @@ export function collectPossibleVariable<VT extends VariablesType | LocalVars = V
                 variableValue = []
             } else if (token[0] === ';') {
                 break
+            } else if (!variableValue) {
+                tokenizer.back(token)
+                return false
             } else {
-                variableValue?.push(token)
+                variableValue.push(token)
             }
         }
         if (variableValue) {

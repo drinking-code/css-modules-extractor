@@ -31,6 +31,15 @@ export default class LocalVars {
             delete this.scopes[i]
         }
     }
+
+    removeVar(name: string, scope?: number): void {
+        for (let i = this.names.length - 1; i >= 0; i--) { // reverse to not skip values
+            if (this.names[i] !== name || (scope !== undefined && this.scopes[i] === scope)) continue
+            delete this.names[i]
+            delete this.values[i]
+            delete this.scopes[i]
+        }
+    }
 }
 
 export function isLocalVars(value: any): value is LocalVars {
