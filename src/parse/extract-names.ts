@@ -39,7 +39,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                     const loopElement = loopOver[loopIndex]
                     if (typeof selector.loopAs === 'string') {
                         localVars.add(selector.loopAs, loopElement, selector.scopeId)
-                        ;(currentSelectorString as string[])[loopIndex] +=
+                        ;(currentSelectorString as string[])[loopIndex] =
                             buildSelectorString(word, currentSelectorString[loopIndex], i, selector, seenImports, fileName, localVars)
                         localVars.removeVar(selector.loopAs, selector.scopeId)
                     } else {
@@ -47,14 +47,16 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                     }
                 }
             } else {
-                currentSelectorString += buildSelectorString(word, currentSelectorString as string, i, selector, seenImports, fileName, localVars)
+                currentSelectorString = buildSelectorString(word, currentSelectorString as string, i, selector, seenImports, fileName, localVars)
             }
-            // console.log(currentSelectorString)
         }
         // if (!startsWithAmp && parentSelector)
         //     currentSelectorString = parentSelector + ' ' + currentSelectorString
 
         if (Array.isArray(currentSelectorString)) {
+            for (const currentSelectorStringEntry of currentSelectorString) {
+                extractNamesFromSelectorString(currentSelectorStringEntry, names, selector, seenImports, fileName, localVars)
+            }
         } else {
             extractNamesFromSelectorString(currentSelectorString, names, selector, seenImports, fileName, localVars)
         }
