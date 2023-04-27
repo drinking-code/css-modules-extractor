@@ -1,5 +1,6 @@
 export default class LocalVars {
-    private names: string[] = []
+    /*private*/
+    names: string[] = []
     private values: any[] = []
     private scopes: number[] = []
 
@@ -11,16 +12,20 @@ export default class LocalVars {
 
     has(name: string, scope: number): boolean {
         for (let i = 0; i < this.names.length; i++) {
-            if (this.names[i] == name && this.scopes[i] == scope) return true
+            if (this.names[i] == name && this.scopes[i] <= scope) return true
         }
         return false
     }
 
     get(name: string, scope: number): any | void {
+        let value: any, foundScope: number = 0
         for (let i = 0; i < this.names.length; i++) {
-            if (this.names[i] == name && this.scopes[i] == scope)
-                return this.values[i]
+            if (this.names[i] == name && this.scopes[i] <= scope && this.scopes[i] >= foundScope) {
+                foundScope = this.scopes[i]
+                value = this.values[i]
+            }
         }
+        return value
     }
 
     removeScope(scope: number): void {

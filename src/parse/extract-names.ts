@@ -1,15 +1,30 @@
 import {type ImportData, type Selector} from './get-selectors.js'
-import {spaceSymbol} from './trim-sentence.js'
+import {spaceSymbol, trimSentence} from './trim-sentence.js'
 import {evaluateExpression} from './evaluate-expression.js'
 import type LocalVars from './local-vars.js'
+import {resolveVariable} from './variables.js'
+import {globalImport} from './collect-import.js'
+import {parseList} from './parse-list.js'
 
 const lastSelectorPart = (fullSelector: string): string => fullSelector.substring(fullSelector.lastIndexOf(' ') + 1)
 
-export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string, names: {[local: string]: string}, localVars: LocalVars, parentSelector: string = '') {
+export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string,
+                             names: { [local: string]: string }, localVars: LocalVars, parentSelector: string = '') {
     for (const selector of selectors) {
         // evaluate expressions only if after space, at position 0, or inside class / id
-        let currentSelectorString = ''
+        let currentSelectorString: string | string[] = ''
         // let startsWithAmp = selector.content[0][0] === '&'
+        let loopOver
+        if ('loopOver' in selector) {
+            if (typeof selector.loopOver === 'string' && (selector.loopOver.startsWith('$') || selector.loopOver.includes('.$'))) {
+                loopOver = resolveVariable(selector.loopOver, globalImport, seenImports, fileName, localVars, selector.scopeId)
+                trimSentence(loopOver)
+                parseList(loopOver)
+                currentSelectorString = Array(loopOver.length).fill('')
+            } else {
+                loopOver = selector.loopOver
+            }
+        }
         for (let i = 0; i < selector.content.length; i++) {
             if (selector.content[i] === spaceSymbol) continue
             while ((selector.content[i] as string).includes('&')) {
@@ -17,47 +32,68 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
                 selector.content[i] =
                     (selector.content[i] as string).substring(0, ampIndex) + parentSelector + (selector.content[i] as string).substring(ampIndex + 1)
             }
-            // console.log(selector.content[i])
 
             const word = selector.content[i]
-            if (typeof word === 'string') {
-                // console.log(word, word.startsWith('#{'), i === 0, selector.content[i - 1] === spaceSymbol, lastSelectorPart(currentSelectorString).startsWith('.'), lastSelectorPart(currentSelectorString).startsWith('#'))
-                // console.log(i)
+            if (loopOver) {
+                for (let loopIndex = 0; loopIndex < loopOver.length; loopIndex++) {
+                    const loopElement = loopOver[loopIndex]
+                    if (typeof selector.loopAs === 'string') {
+                        localVars.add(selector.loopAs, loopElement, selector.scopeId)
+                        ;(currentSelectorString as string[])[loopIndex] +=
+                            buildSelectorString(word, currentSelectorString[loopIndex], i, selector, seenImports, fileName, localVars)
+                        localVars.removeVar(selector.loopAs, selector.scopeId)
+                    } else {
+                        // console.warn('Destructuring not implemented.')
+                    }
+                }
             } else {
-                // console.log(word)
+                currentSelectorString += buildSelectorString(word, currentSelectorString as string, i, selector, seenImports, fileName, localVars)
             }
-            // console.log('css-be', currentSelectorString)
-            if (word === spaceSymbol) {
-                currentSelectorString += ' '
-            } else if (word.startsWith('#{') &&
-                (i === 0 || selector.content[i - 1] === spaceSymbol ||
-                    lastSelectorPart(currentSelectorString).startsWith('.') ||
-                    lastSelectorPart(currentSelectorString).startsWith('#'))
-            ) {
-                currentSelectorString += evaluateExpression(word.slice(2, -1), seenImports, fileName, localVars, selector.scopeId)
-            } else {
-                currentSelectorString += word
-            }
-            // console.log('css-af', currentSelectorString)
+            // console.log(currentSelectorString)
         }
         // if (!startsWithAmp && parentSelector)
         //     currentSelectorString = parentSelector + ' ' + currentSelectorString
 
-        let name = ''
-        for (let i = currentSelectorString.length - 1; i >= 0; i--) {
-            const char = currentSelectorString[i]
-            name = char + name
-            if (char === '#' || char === '.') {
-                if (!(name in names))
-                    names[name.substring(1)] = name
-                name = ''
-            } else if (char === ' ' || char === ',' || char === ':') {
-                name = ''
-            }
-        }
-
-        if (selector.children && selector.children.length > 0) {
-            extractNames(selector.children, seenImports, fileName, names, localVars, currentSelectorString)
+        if (Array.isArray(currentSelectorString)) {
+        } else {
+            extractNamesFromSelectorString(currentSelectorString, names, selector, seenImports, fileName, localVars)
         }
     }
+}
+
+function extractNamesFromSelectorString(currentSelectorString: string, names: { [local: string]: string },
+                                        selector: Selector, seenImports: ImportData[], fileName: string, localVars: LocalVars) {
+    let name = ''
+
+    for (let i = currentSelectorString.length - 1; i >= 0; i--) {
+        const char = currentSelectorString[i]
+        name = char + name
+        if (char === '#' || char === '.') {
+            if (!(name in names))
+                names[name.substring(1)] = name
+            name = ''
+        } else if (char === ' ' || char === ',' || char === ':') {
+            name = ''
+        }
+    }
+
+    if (selector.children && selector.children.length > 0) {
+        extractNames(selector.children, seenImports, fileName, names, localVars, currentSelectorString)
+    }
+}
+
+function buildSelectorString(word: string | typeof spaceSymbol, currentSelectorString: string, i: number, selector: Selector,
+                             seenImports: ImportData[], fileName: string, localVars: LocalVars): string {
+    if (word === spaceSymbol) {
+        currentSelectorString += ' '
+    } else if (word.startsWith('#{') &&
+        (i === 0 || selector.content[i - 1] === spaceSymbol ||
+            lastSelectorPart(currentSelectorString).startsWith('.') ||
+            lastSelectorPart(currentSelectorString).startsWith('#'))
+    ) {
+        currentSelectorString += evaluateExpression(word.slice(2, -1), seenImports, fileName, localVars, selector.scopeId)
+    } else {
+        currentSelectorString += word
+    }
+    return currentSelectorString
 }
