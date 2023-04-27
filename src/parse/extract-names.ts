@@ -6,8 +6,6 @@ import {resolveVariable} from './variables.js'
 import {globalImport} from './collect-import.js'
 import {parseList} from './parse-list.js'
 
-const lastSelectorPart = (fullSelector: string): string => fullSelector.substring(fullSelector.lastIndexOf(' ') + 1)
-
 export function extractNames(selectors: Selector[], seenImports: ImportData[], fileName: string,
                              names: { [local: string]: string }, localVars: LocalVars, parentSelector: string = '') {
     for (const selector of selectors) {
@@ -49,6 +47,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
             } else {
                 currentSelectorString = buildSelectorString(word, currentSelectorString as string, i, selector, seenImports, fileName, localVars)
             }
+            // console.log(word, currentSelectorString)
         }
         // if (!startsWithAmp && parentSelector)
         //     currentSelectorString = parentSelector + ' ' + currentSelectorString
@@ -84,14 +83,21 @@ function extractNamesFromSelectorString(currentSelectorString: string, names: { 
     }
 }
 
+const getLastSelectorPart = (fullSelector: string): string => fullSelector.substring(fullSelector.lastIndexOf(' ') + 1)
+
+function lastSelectorPartStartsOrEndsWithDotOrNumberSymbol(currentSelectorString: string) {
+    const lastSelectorPart = getLastSelectorPart(currentSelectorString)
+    return lastSelectorPart.startsWith('.') || lastSelectorPart.startsWith('#') || lastSelectorPart.endsWith('.') || lastSelectorPart.endsWith('#')
+}
+
 function buildSelectorString(word: string | typeof spaceSymbol, currentSelectorString: string, i: number, selector: Selector,
                              seenImports: ImportData[], fileName: string, localVars: LocalVars): string {
+    /*console.log(i, i === 0, selector.content[i - 1] === spaceSymbol, getLastSelectorPart(currentSelectorString),
+        getLastSelectorPart(currentSelectorString).startsWith('.'), getLastSelectorPart(currentSelectorString).startsWith('#'))*/
     if (word === spaceSymbol) {
         currentSelectorString += ' '
     } else if (word.startsWith('#{') &&
-        (i === 0 || selector.content[i - 1] === spaceSymbol ||
-            lastSelectorPart(currentSelectorString).startsWith('.') ||
-            lastSelectorPart(currentSelectorString).startsWith('#'))
+        (i === 0 || selector.content[i - 1] === spaceSymbol || lastSelectorPartStartsOrEndsWithDotOrNumberSymbol(currentSelectorString))
     ) {
         currentSelectorString += evaluateExpression(word.slice(2, -1), seenImports, fileName, localVars, selector.scopeId)
     } else {

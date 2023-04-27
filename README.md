@@ -23,6 +23,9 @@ const cssModulesJson = getNames(fileName)
 
 This is about **20 times faster** than compiling the SCSS and extracting the names with `postcss-modules`.
 
+> **Warning**&nbsp;&nbsp;
+> This package is still experimental. Some SCSS features may not be implemented yet.
+
 ## Install
 
 ```
