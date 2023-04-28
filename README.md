@@ -1,6 +1,7 @@
-# Extract names from SCSS modules
+# Extract names from SCSS / CSS modules
 
-Package for fast extraction of module names from SCSS files.
+Package for fast extraction of module names from SCSS files. Since SCSS is backwards compatible with CSS, this package
+also works with CSS files.
 
 Typically, you would do something like this:
 
