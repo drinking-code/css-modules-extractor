@@ -11,7 +11,6 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
     for (const selector of selectors) {
         // evaluate expressions only if after space, at position 0, or inside class / id
         let currentSelectorString: string | string[] = ''
-        // let startsWithAmp = selector.content[0][0] === '&'
         let loopOver
         if ('loopOver' in selector) {
             if (typeof selector.loopOver === 'string' && (selector.loopOver.startsWith('$') || selector.loopOver.includes('.$'))) {
@@ -24,13 +23,13 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
             }
         }
         for (let i = 0; i < selector.content.length; i++) {
-            if (selector.content[i] === spaceSymbol) continue
-            while ((selector.content[i] as string).includes('&')) {
-                const ampIndex = (selector.content[i] as string).indexOf('&')
-                selector.content[i] =
-                    (selector.content[i] as string).substring(0, ampIndex) + parentSelector + (selector.content[i] as string).substring(ampIndex + 1)
+            if (selector.content[i] !== spaceSymbol) {
+                while ((selector.content[i] as string).includes('&')) {
+                    const ampIndex = (selector.content[i] as string).indexOf('&')
+                    selector.content[i] =
+                        (selector.content[i] as string).substring(0, ampIndex) + parentSelector + (selector.content[i] as string).substring(ampIndex + 1)
+                }
             }
-
             const word = selector.content[i]
             if (loopOver) {
                 for (let loopIndex = 0; loopIndex < loopOver.length; loopIndex++) {
@@ -47,10 +46,7 @@ export function extractNames(selectors: Selector[], seenImports: ImportData[], f
             } else {
                 currentSelectorString = buildSelectorString(word, currentSelectorString as string, i, selector, seenImports, fileName, localVars)
             }
-            // console.log(word, currentSelectorString)
         }
-        // if (!startsWithAmp && parentSelector)
-        //     currentSelectorString = parentSelector + ' ' + currentSelectorString
 
         if (Array.isArray(currentSelectorString)) {
             for (const currentSelectorStringEntry of currentSelectorString) {
@@ -73,7 +69,7 @@ function extractNamesFromSelectorString(currentSelectorString: string, names: { 
             if (!(name in names))
                 names[name.substring(1)] = name
             name = ''
-        } else if (char === ' ' || char === ',' || char === ':') {
+        } else if (char === ' ' || char === ',' || char === ':' || char === '(' || char === '+' || char === '>' || char === '~') {
             name = ''
         }
     }
@@ -87,7 +83,7 @@ const getLastSelectorPart = (fullSelector: string): string => fullSelector.subst
 
 function lastSelectorPartStartsOrEndsWithDotOrNumberSymbol(currentSelectorString: string) {
     const lastSelectorPart = getLastSelectorPart(currentSelectorString)
-    return lastSelectorPart.startsWith('.') || lastSelectorPart.startsWith('#') || lastSelectorPart.endsWith('.') || lastSelectorPart.endsWith('#')
+    return lastSelectorPart.startsWith('.') || lastSelectorPart.startsWith('#')/* || lastSelectorPart.endsWith('.') || lastSelectorPart.endsWith('#')*/
 }
 
 function buildSelectorString(word: string | typeof spaceSymbol, currentSelectorString: string, i: number, selector: Selector,
